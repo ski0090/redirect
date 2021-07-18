@@ -8,6 +8,8 @@
 
 //! common command list methods implementation boilerplate
 
+use winapi::{shared::minwindef::TRUE, um::d3d12::{D3D12_GPU_DESCRIPTOR_HANDLE, ID3D12GraphicsCommandList}};
+
 use super::*;
 
 pub trait CommandList {
@@ -135,7 +137,7 @@ pub trait GraphicsCommandList: CommandList {
         unsafe {
             self.as_raw_ptr().OMSetRenderTargets(
                 num_rtvs, &rtv_handle as *const _ as *const _,
-                ::winapi::TRUE, &dsv as *const _ as *const _
+                TRUE, &dsv as *const _ as *const _
             )
         }
     }
@@ -149,7 +151,7 @@ pub trait GraphicsCommandList: CommandList {
             self.as_raw_ptr().OMSetRenderTargets(
                 rtvs.len() as u32, 
                 rtvs.as_ptr() as *const _,
-                ::winapi::TRUE, &dsv as *const _ as *const _
+                TRUE, &dsv as *const _ as *const _
             )
         }
     }
@@ -338,13 +340,13 @@ pub trait CopyCommandList: CommandList {
 /// common methods for a command list with bounded descriptor heaps
 pub trait CommandListWithHeap {
     /// set a decriptor table in the graphics root signature TODO: double check
-    fn set_graphics_root_dt<H: Into<::winapi::D3D12_GPU_DESCRIPTOR_HANDLE>>
+    fn set_graphics_root_dt<H: Into<D3D12_GPU_DESCRIPTOR_HANDLE>>
     (
         &mut self, param_index: u32, base_descriptor: H
     );
 
     /// set a decriptor table in the compute root signature TODO: double check
-    fn set_compute_root_dt<H: Into<::winapi::D3D12_GPU_DESCRIPTOR_HANDLE>>
+    fn set_compute_root_dt<H: Into<D3D12_GPU_DESCRIPTOR_HANDLE>>
     (
         &mut self, param_index: u32, base_descriptor: H
     );
@@ -355,7 +357,7 @@ macro_rules! impl_common_with_heap_commands{
 impl<$($T),+> CommandListWithHeap for $Type<$($T),+> {
     /// set a decriptor table in the graphics root signature
     #[inline]
-    fn set_graphics_root_dt<H: Into<::winapi::D3D12_GPU_DESCRIPTOR_HANDLE>>
+    fn set_graphics_root_dt<H: Into<::winapi::um::d3d12::D3D12_GPU_DESCRIPTOR_HANDLE>>
     (
         &mut self, param_index: u32, base_descriptor: H
     ) {
@@ -366,7 +368,7 @@ impl<$($T),+> CommandListWithHeap for $Type<$($T),+> {
 
     /// set a decriptor table in the compute root signature
     #[inline]
-    fn set_compute_root_dt<H: Into<::winapi::D3D12_GPU_DESCRIPTOR_HANDLE>>
+    fn set_compute_root_dt<H: Into<::winapi::um::d3d12::D3D12_GPU_DESCRIPTOR_HANDLE>>
     (
         &mut self, param_index: u32, base_descriptor: H
     ) {

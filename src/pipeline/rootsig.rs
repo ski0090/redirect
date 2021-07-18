@@ -7,12 +7,11 @@
 // except according to those terms.
 
 //! describes what kind of resources are to be bound to the pipeline.
-
 use device::Device;
 use smallvec::SmallVec;
 use comptr::ComPtr;
-use winapi::{ID3D12RootSignature, ID3DBlob};
 use error::WinError;
+use winapi::um::{d3d12::{D3D12SerializeRootSignature, D3D12_ROOT_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER, D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS, D3D12_ROOT_PARAMETER_TYPE_CBV, D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER_TYPE_SRV, D3D12_ROOT_PARAMETER_TYPE_UAV, D3D12_ROOT_PARAMETER_u, D3D12_ROOT_SIGNATURE_DESC, D3D12_ROOT_SIGNATURE_FLAGS, D3D_ROOT_SIGNATURE_VERSION_1, ID3D12RootSignature}, d3dcommon::ID3DBlob};
 use super::sampler::StaticSamplerDesc;
 
 /// a root signature
@@ -54,7 +53,7 @@ impl RootSigBuilder {
             root_params.push(root_param.into());
         }
         
-        let desc = ::winapi::D3D12_ROOT_SIGNATURE_DESC{
+        let desc = D3D12_ROOT_SIGNATURE_DESC{
             NumParameters: root_params.len() as u32,
             pParameters: root_params.as_ptr(),
             NumStaticSamplers: self.static_samplers.len() as u32,
@@ -63,9 +62,9 @@ impl RootSigBuilder {
         };
 
         unsafe {
-            let mut ptr = ::std::mem::uninitialized();
-            let hr = ::d3d12::D3D12SerializeRootSignature(
-                &desc, ::winapi::D3D_ROOT_SIGNATURE_VERSION_1, // TODO: support more signature versions?
+            let mut ptr = std::ptr::null_mut();
+            let hr = D3D12SerializeRootSignature(
+                &desc, D3D_ROOT_SIGNATURE_VERSION_1, // TODO: support more signature versions?
                 &mut ptr,
                 ::std::ptr::null_mut() // TODO: support error blob?
             );
@@ -84,14 +83,14 @@ pub struct RootParam {
     pub param_type: RootParamType,
 }
 
-impl<'a> From<&'a RootParam> for ::winapi::D3D12_ROOT_PARAMETER {
+impl<'a> From<&'a RootParam> for D3D12_ROOT_PARAMETER {
     fn from(param: &'a RootParam) -> Self {
         let (t, d) = match param.param_type {
             RootParamType::DescriptorTable{
                 ref descriptor_ranges
             } => (
-                ::winapi::D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
-                ::winapi::D3D12_ROOT_DESCRIPTOR_TABLE {
+                D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
+                D3D12_ROOT_DESCRIPTOR_TABLE {
                     NumDescriptorRanges: descriptor_ranges.len() as u32,
                     pDescriptorRanges: descriptor_ranges.as_ptr() as *const _,
                 }
@@ -99,31 +98,37 @@ impl<'a> From<&'a RootParam> for ::winapi::D3D12_ROOT_PARAMETER {
             RootParamType::Constant{
                 shader_register, register_space, num_32bit_values,
             } => (
-                ::winapi::D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+                D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
                 ParamTypeHelper::new(shader_register, register_space, num_32bit_values).into()
             ),
             RootParamType::Cbv{
                 shader_register, register_space,
             } => (
-                ::winapi::D3D12_ROOT_PARAMETER_TYPE_CBV,
+                D3D12_ROOT_PARAMETER_TYPE_CBV,
                 ParamTypeHelper::new(shader_register, register_space, 0).into()
             ),
             RootParamType::Srv{
                 shader_register, register_space,
             } => (
-                ::winapi::D3D12_ROOT_PARAMETER_TYPE_SRV,
+                D3D12_ROOT_PARAMETER_TYPE_SRV,
                 ParamTypeHelper::new(shader_register, register_space, 0).into()
             ),
             RootParamType::Uav{
                 shader_register, register_space,
             } => (
-                ::winapi::D3D12_ROOT_PARAMETER_TYPE_UAV,
+                D3D12_ROOT_PARAMETER_TYPE_UAV,
                 ParamTypeHelper::new(shader_register, register_space, 0).into()
             ),
         };
-        ::winapi::D3D12_ROOT_PARAMETER{
+        
+        let u = unsafe{
+            let mut u:D3D12_ROOT_PARAMETER_u = std::mem::zeroed();
+            *u.DescriptorTable_mut() = d;
+            u
+        };
+        D3D12_ROOT_PARAMETER{
             ParameterType: t,
-            u: d,
+            u,
             ShaderVisibility: unsafe{::std::mem::transmute(param.visibility)}
         }
     }
@@ -184,7 +189,7 @@ impl ParamTypeHelper {
     }
 }
 
-impl From<ParamTypeHelper> for ::winapi::D3D12_ROOT_DESCRIPTOR_TABLE {
+impl From<ParamTypeHelper> for D3D12_ROOT_DESCRIPTOR_TABLE {
     fn from(helper: ParamTypeHelper) -> Self {
         unsafe {::std::mem::transmute(helper)}
     }
@@ -254,7 +259,7 @@ impl Default for RootSigFlags {
     }
 }
 
-impl From<RootSigFlags> for ::winapi::D3D12_ROOT_SIGNATURE_FLAGS {
+impl From<RootSigFlags> for D3D12_ROOT_SIGNATURE_FLAGS {
     #[inline]
     fn from(flags: RootSigFlags) -> Self {
         unsafe{ ::std::mem::transmute(flags)}

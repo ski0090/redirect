@@ -9,6 +9,7 @@
 //! describes a shader resource view
 
 use format::DxgiFormat;
+use winapi::um::d3d12::{D3D12_SRV_DIMENSION, D3D12_SRV_DIMENSION_BUFFER, D3D12_SRV_DIMENSION_TEXTURE1D, D3D12_SRV_DIMENSION_TEXTURE1DARRAY, D3D12_SRV_DIMENSION_TEXTURE2D, D3D12_SRV_DIMENSION_TEXTURE2DARRAY, D3D12_SRV_DIMENSION_TEXTURE2DMS, D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY, D3D12_SRV_DIMENSION_TEXTURE3D, D3D12_SRV_DIMENSION_TEXTURECUBE, D3D12_SRV_DIMENSION_TEXTURECUBEARRAY, D3D12_SRV_DIMENSION_UNKNOWN};
 use super::Shader4ComponentMapping;
 
 /// describes a shader resource view
@@ -162,7 +163,7 @@ pub struct SrvTexCubeArrayDesc{
 #[derive(Copy, Clone, Debug)]
 pub struct SrvDescBindHelper {
     format: DxgiFormat,
-    view_dimension: ::winapi::D3D12_SRV_DIMENSION,
+    view_dimension: D3D12_SRV_DIMENSION,
     component_mapping: u32,
     a: [u32; 6],
 }
@@ -176,43 +177,43 @@ impl From<SrvDesc> for SrvDescBindHelper{
             ret.component_mapping = ::std::mem::transmute(desc.component_mapping);
             match desc.dimension {
                 SrvDimension::Unknown =>
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_UNKNOWN,
+                    ret.view_dimension = D3D12_SRV_DIMENSION_UNKNOWN,
                 SrvDimension::Buffer(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_BUFFER;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_BUFFER;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex1D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE1D;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE1D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex1DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex2D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE2D;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE2D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex2DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex2DMs =>
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE2DMS,
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE2DMS,
                 SrvDimension::Tex2DMsArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::Tex3D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURE3D;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURE3D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::TexCube(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURECUBE;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 SrvDimension::TexCubeArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+                    ret.view_dimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
             }

@@ -9,10 +9,10 @@
 //! link between the graphics API and the target surface
 
 use comptr::ComPtr;
-use winapi::IDXGISwapChain3;
 use format::*;
 use resource::*;
 use error::WinError;
+use winapi::{shared::{dxgi1_2::{DXGI_SCALING, DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC}, dxgi1_4::IDXGISwapChain3, dxgiformat::{DXGI_FORMAT, DXGI_FORMAT_UNKNOWN}, dxgitype::DXGI_RGBA, windef::HWND}, um::d3d12::IID_ID3D12Resource};
 
 /// link between the graphics API and the target surface
 #[derive(Debug)]
@@ -33,9 +33,9 @@ impl SwapChain {
     #[inline]
     pub fn get_buffer(&mut self, index: u32) -> Result<RawResource, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.GetBuffer(
-                index, & ::dxguid::IID_ID3D12Resource,
+                index, & IID_ID3D12Resource,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || RawResource{
@@ -88,12 +88,12 @@ impl SwapChain {
 
     /// get the background color for the next `present` method of this swapchain
     #[inline]
-    pub fn get_background_color(&mut self) -> Result<[f32; 4], WinError> {
+    pub fn get_background_color(&mut self) -> Result<DXGI_RGBA, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            let hr = self.ptr.GetBackgroundColor(&mut ret);
+            let ret: *mut DXGI_RGBA = std::ptr::null_mut();
+            let hr = self.ptr.GetBackgroundColor(ret);
             WinError::from_hresult_or_ok(hr, || {
-                [ret.r, ret.g, ret.b, ret.a]
+                *ret
             })
         }
     }
@@ -101,7 +101,7 @@ impl SwapChain {
     /// change the background color for the next frame
     #[inline]
     pub fn set_background_color(&mut self, r: f32, g: f32, b: f32, a: f32) -> Result<(), WinError> {
-        let rgba = ::winapi::DXGI_RGBA{r, g, b, a};
+        let rgba = DXGI_RGBA{r, g, b, a};
         WinError::from_hresult(unsafe {
             self.ptr.SetBackgroundColor(&rgba)
         })
@@ -111,29 +111,29 @@ impl SwapChain {
 
     /// get description
     #[inline]
-    pub fn get_desc(&mut self) -> Result<SwapChainDesc, WinError> {
+    pub fn get_desc(&mut self) -> Result<DXGI_SWAP_CHAIN_DESC1, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            let hr = self.ptr.GetDesc1(&mut ret);
-            WinError::from_hresult_or_ok(hr, || ::std::mem::transmute(ret))
+            let ret:*mut DXGI_SWAP_CHAIN_DESC1 = std::ptr::null_mut();
+            let hr = self.ptr.GetDesc1(ret);
+            WinError::from_hresult_or_ok(hr, || *ret)
         }
     }
 
     /// get fullscreen description
     #[inline]
-    pub fn get_fullscreen_desc(&mut self) -> Result<FullScreenDesc, WinError> {
+    pub fn get_fullscreen_desc(&mut self) -> Result<DXGI_SWAP_CHAIN_FULLSCREEN_DESC, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            let hr = self.ptr.GetFullscreenDesc(&mut ret);
-            WinError::from_hresult_or_ok(hr, || ::std::mem::transmute(ret))
+            let ret:*mut DXGI_SWAP_CHAIN_FULLSCREEN_DESC = std::ptr::null_mut();
+            let hr = self.ptr.GetFullscreenDesc(ret);
+            WinError::from_hresult_or_ok(hr, || *ret)
         }
     }
 
     /// get the underlying `HWMD` handle for the swapchain object
     #[inline]
-    pub fn get_hwnd(&mut self) -> Result<::winapi::HWND, WinError> {
+    pub fn get_hwnd(&mut self) -> Result<HWND, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.GetHwnd(&mut ret);
             WinError::from_hresult_or_ok(hr, || ret)
         }
@@ -212,7 +212,7 @@ pub struct SwapChainDesc {
 impl SwapChainDesc {
     /// create a new `SwapChainDesc` with default parameters
     #[inline]
-    pub fn new(format: DxgiFormat) -> SwapChainDesc {
+    pub fn new(format: DXGI_FORMAT) -> SwapChainDesc {
         SwapChainDesc{
             width: 0,
             height: 0, 
@@ -229,7 +229,7 @@ impl SwapChainDesc {
     }
 }
 
-impl From<SwapChainDesc> for ::winapi::DXGI_SWAP_CHAIN_DESC1 {
+impl From<SwapChainDesc> for DXGI_SWAP_CHAIN_DESC1 {
     #[inline]
     fn from(desc: SwapChainDesc) -> Self {
         unsafe {
@@ -268,7 +268,7 @@ impl Default for FullScreenDesc {
     }
 }
 
-impl From<FullScreenDesc> for ::winapi::DXGI_SWAP_CHAIN_FULLSCREEN_DESC {
+impl From<FullScreenDesc> for DXGI_SWAP_CHAIN_FULLSCREEN_DESC {
     #[inline]
     fn from(desc: FullScreenDesc) -> Self {
         // TODO: double check
@@ -336,9 +336,9 @@ bitflags!{
     }
 }
 
-impl From<Scaling> for ::winapi::DXGI_SCALING {
+impl From<Scaling> for DXGI_SCALING {
     fn from(scaling: Scaling) -> Self {
-        ::winapi::DXGI_SCALING(scaling.bits())
+        DXGI_SCALING::from(scaling.bits())
     }
 }
 

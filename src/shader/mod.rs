@@ -9,7 +9,8 @@
 //! executable code snippet for GPU
 
 use comptr::ComPtr;
-use winapi::ID3DBlob;
+use winapi::um::d3dcommon::ID3DBlob;
+use winapi::um::d3dcompiler::*;
 use std::os::raw::c_char;
 use std::ffi::CStr;
 use std::marker::PhantomData;
@@ -56,9 +57,9 @@ macro_rules! impl_shader_bytecode {
     ($Shader: ty) => {
         impl $Shader {
             #[inline]
-            pub fn to_shader_bytecode(&mut self) -> ::winapi::D3D12_SHADER_BYTECODE {
-                let mut ret: ::winapi::D3D12_SHADER_BYTECODE = unsafe {
-                    ::std::mem::uninitialized()
+            pub fn to_shader_bytecode(&mut self) -> ::winapi::um::d3d12::D3D12_SHADER_BYTECODE {
+                let mut ret: ::winapi::um::d3d12::D3D12_SHADER_BYTECODE = unsafe {
+                    std::mem::zeroed()
                 };
                 ret.pShaderBytecode = unsafe {
                     self.ptr.GetBufferPointer() as *const _
@@ -99,13 +100,13 @@ macro_rules! impl_build {
     pub fn $func(&mut self) -> Result<$Ret, WinError> {
         self.shader_macros.push(Default::default());
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            let hr = ::d3dcompiler::D3DCompile(
+            let mut ret = std::ptr::null_mut();
+            let hr = ::winapi::um::d3dcompiler::D3DCompile(
                 self.src_data.as_ptr() as *const _ as *const _,
                 self.src_data.len() as _,
                 ::std::ptr::null(),
                 self.shader_macros.as_ptr() as *const _,
-                ::winapi::D3D_COMPILE_STANDARD_FILE_INCLUDE,
+                ::winapi::um::d3dcompiler::D3D_COMPILE_STANDARD_FILE_INCLUDE,
                 self.entry_point.as_ptr() as _,
                 $Target.as_ptr() as *const _,
                 ::std::mem::transmute(self.flags),
@@ -178,28 +179,28 @@ impl<'a> Default for ShaderMacro<'a> {
 bitflags!{
     /// shader compile flags. [more](https://msdn.microsoft.com/en-us/library/windows/desktop/gg615083(v=vs.85).aspx)
     pub struct ShaderCompileFlags: u32 {
-        const DEBUG = ::winapi::D3DCOMPILE_DEBUG;
-        const SKIP_VALIDATION = ::winapi::D3DCOMPILE_SKIP_VALIDATION;
-        const SKIP_OPTIMIZATION = ::winapi::D3DCOMPILE_SKIP_OPTIMIZATION;
-        const PACK_MATRIX_ROW_MAJOR = ::winapi::D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
-        const PACK_MATRIX_COLUMN_MAJOR = ::winapi::D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
-        const PARTIAL_PRECISION = ::winapi::D3DCOMPILE_PARTIAL_PRECISION;
-        const FORCE_VS_SOFTWARE_NO_OPT = ::winapi::D3DCOMPILE_FORCE_VS_SOFTWARE_NO_OPT;
-        const FORCE_PS_SOFTWARE_NO_OPT = ::winapi::D3DCOMPILE_FORCE_PS_SOFTWARE_NO_OPT;
-        const NO_PRESHADER = ::winapi::D3DCOMPILE_NO_PRESHADER;
-        const AVOID_FLOW_CONTROL = ::winapi::D3DCOMPILE_AVOID_FLOW_CONTROL;
-        const PREFER_FLOW_CONTROL = ::winapi::D3DCOMPILE_PREFER_FLOW_CONTROL;
-        const ENABLE_STRICTNESS = ::winapi::D3DCOMPILE_ENABLE_STRICTNESS;
-        const ENABLE_BACKWARDS_COMPATIBILITY = ::winapi::D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-        const IEEE_STRICTNESS = ::winapi::D3DCOMPILE_IEEE_STRICTNESS;
-        const OPTIMIZATION_LEVEL0 = ::winapi::D3DCOMPILE_OPTIMIZATION_LEVEL0;
-        const OPTIMIZATION_LEVEL1 = ::winapi::D3DCOMPILE_OPTIMIZATION_LEVEL1;
-        const OPTIMIZATION_LEVEL2 = ::winapi::D3DCOMPILE_OPTIMIZATION_LEVEL2;
-        const OPTIMIZATION_LEVEL3 = ::winapi::D3DCOMPILE_OPTIMIZATION_LEVEL3;
-        const WARNINGS_ARE_ERRORS = ::winapi::D3DCOMPILE_WARNINGS_ARE_ERRORS;
-        const RESOURCES_MAY_ALIAS = ::winapi::D3DCOMPILE_RESOURCES_MAY_ALIAS;
-        const ENABLE_UNBOUNDED_DESCRIPTOR_TABLES = ::winapi::D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
-        const ALL_RESOURCES_BOUND = ::winapi::D3DCOMPILE_ALL_RESOURCES_BOUND;
+        const DEBUG = D3DCOMPILE_DEBUG;
+        const SKIP_VALIDATION = D3DCOMPILE_SKIP_VALIDATION;
+        const SKIP_OPTIMIZATION = D3DCOMPILE_SKIP_OPTIMIZATION;
+        const PACK_MATRIX_ROW_MAJOR = D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
+        const PACK_MATRIX_COLUMN_MAJOR = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR;
+        const PARTIAL_PRECISION = D3DCOMPILE_PARTIAL_PRECISION;
+        const FORCE_VS_SOFTWARE_NO_OPT = D3DCOMPILE_FORCE_VS_SOFTWARE_NO_OPT;
+        const FORCE_PS_SOFTWARE_NO_OPT = D3DCOMPILE_FORCE_PS_SOFTWARE_NO_OPT;
+        const NO_PRESHADER = D3DCOMPILE_NO_PRESHADER;
+        const AVOID_FLOW_CONTROL = D3DCOMPILE_AVOID_FLOW_CONTROL;
+        const PREFER_FLOW_CONTROL = D3DCOMPILE_PREFER_FLOW_CONTROL;
+        const ENABLE_STRICTNESS = D3DCOMPILE_ENABLE_STRICTNESS;
+        const ENABLE_BACKWARDS_COMPATIBILITY = D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
+        const IEEE_STRICTNESS = D3DCOMPILE_IEEE_STRICTNESS;
+        const OPTIMIZATION_LEVEL0 = D3DCOMPILE_OPTIMIZATION_LEVEL0;
+        const OPTIMIZATION_LEVEL1 = D3DCOMPILE_OPTIMIZATION_LEVEL1;
+        const OPTIMIZATION_LEVEL2 = D3DCOMPILE_OPTIMIZATION_LEVEL0;
+        const OPTIMIZATION_LEVEL3 = D3DCOMPILE_OPTIMIZATION_LEVEL3;
+        const WARNINGS_ARE_ERRORS = D3DCOMPILE_WARNINGS_ARE_ERRORS;
+        const RESOURCES_MAY_ALIAS = D3DCOMPILE_RESOURCES_MAY_ALIAS;
+        const ENABLE_UNBOUNDED_DESCRIPTOR_TABLES = D3DCOMPILE_ENABLE_UNBOUNDED_DESCRIPTOR_TABLES;
+        const ALL_RESOURCES_BOUND = D3DCOMPILE_ALL_RESOURCES_BOUND;
     }
 }
 

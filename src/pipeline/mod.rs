@@ -13,10 +13,10 @@
 
 use device::Device;
 use format::DxgiFormat;
-use winapi::{ID3D12PipelineState, ID3DBlob};
 use error::WinError;
 use comptr::ComPtr;
 use shader::*;
+use winapi::{shared::dxgiformat::{DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_UNKNOWN}, um::{d3d12::{D3D12_COMPUTE_PIPELINE_STATE_DESC, D3D12_GRAPHICS_PIPELINE_STATE_DESC, ID3D12PipelineState, IID_ID3D12PipelineState}, d3dcommon::ID3DBlob}};
 use std::mem::transmute;
 
 pub mod so;
@@ -76,8 +76,8 @@ macro_rules! impl_cache_methods {
     ($PS: ident, $PSC: ident) => {
 impl $PSC {
     #[inline]
-    pub fn to_ffi_cache(&mut self) -> ::winapi::D3D12_CACHED_PIPELINE_STATE {
-        unsafe {::winapi::D3D12_CACHED_PIPELINE_STATE{
+    pub fn to_ffi_cache(&mut self) -> ::winapi::um::d3d12::D3D12_CACHED_PIPELINE_STATE {
+        unsafe {::winapi::um::d3d12::D3D12_CACHED_PIPELINE_STATE{
             pCachedBlob: self.ptr.GetBufferPointer(),
             CachedBlobSizeInBytes: self.ptr.GetBufferSize(),
         }}
@@ -89,7 +89,7 @@ impl $PS {
     #[inline]
     pub fn cached(&mut self) -> Result<$PSC, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.GetCachedBlob(&mut ret);
             WinError::from_hresult_or_ok(hr, || $PSC{
                 ptr: ComPtr::new(ret)
@@ -144,8 +144,8 @@ impl<'a> GraphicsPipelineStateBuilder<'a> {
             strip_cut_value: Default::default(),
             primitive_topology_type: ia::PrimitiveTopologyType::TRIANGLE,
             num_render_targets: 1,
-            rtv_formats: [::format::DXGI_FORMAT_UNKNOWN; 8],
-            dsv_format: ::format::DXGI_FORMAT_D24_UNORM_S8_UINT,
+            rtv_formats: [DXGI_FORMAT_UNKNOWN; 8],
+            dsv_format: DXGI_FORMAT_D24_UNORM_S8_UINT,
             sample_desc: Default::default(),
             node_mask: 0,
             cache: None,
@@ -155,7 +155,7 @@ impl<'a> GraphicsPipelineStateBuilder<'a> {
 
     pub fn build(&mut self, device: &mut Device) -> Result<GraphicsPipelineState, WinError> {
         unsafe {
-            let mut desc: ::winapi::D3D12_GRAPHICS_PIPELINE_STATE_DESC = ::std::mem::zeroed();
+            let mut desc: D3D12_GRAPHICS_PIPELINE_STATE_DESC = ::std::mem::zeroed();
             desc.pRootSignature = self.rootsig.ptr.as_mut_ptr();
             if let Some(ref mut vs) = self.vs { desc.VS = vs.to_shader_bytecode(); }
             if let Some(ref mut ps) = self.ps { desc.PS = ps.to_shader_bytecode(); }
@@ -179,9 +179,9 @@ impl<'a> GraphicsPipelineStateBuilder<'a> {
             if let Some(ref mut pso) = self.cache { desc.CachedPSO = pso.to_ffi_cache(); }
             desc.Flags = transmute(self.flags);
 
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateGraphicsPipelineState(
-                &desc, & ::dxguid::IID_ID3D12PipelineState,
+                &desc, & IID_ID3D12PipelineState,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || GraphicsPipelineState{
@@ -215,16 +215,16 @@ impl<'a> ComputePipelineStateBuilder<'a> {
 
     pub fn build(&mut self, device: &mut Device) -> Result<ComputePipelineState, WinError> {
         unsafe {
-            let mut desc: ::winapi::D3D12_COMPUTE_PIPELINE_STATE_DESC = ::std::mem::zeroed();
+            let mut desc: D3D12_COMPUTE_PIPELINE_STATE_DESC = ::std::mem::zeroed();
             desc.pRootSignature = self.rootsig.ptr.as_mut_ptr();
             if let Some(ref mut cs) = self.cs { desc.CS = cs.to_shader_bytecode(); }
             desc.NodeMask = self.node_mask;
             if let Some(ref mut pso) = self.cache { desc.CachedPSO = pso.to_ffi_cache(); }
             desc.Flags = transmute(self.flags);
 
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateComputePipelineState(
-                &desc, & ::dxguid::IID_ID3D12PipelineState,
+                &desc, & IID_ID3D12PipelineState,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || ComputePipelineState{

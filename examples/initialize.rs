@@ -7,11 +7,12 @@
 // except according to those terms.
 
 //! demonstrates initialization boilerplates
-
+extern crate winapi;
 extern crate redirect;
 extern crate winit;
 
 use redirect::descriptor::DescriptorHeap;
+use winapi::shared::dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM;
 
 fn main() {
     // initialize factory
@@ -21,19 +22,16 @@ fn main() {
     for mut adapter in factory.enumerate_adapters() {
         // get and print adapter descriptions
         if let Ok(desc) = adapter.get_desc() {
-            println!("{}", desc);
         } else {
             println!("can't get adapter description.");
         }
 
         // get and print vram of node 0
         if let Ok(meminfo) = adapter.query_mem_info(0, true) {
-            println!("Local Memory Info: {:?}", meminfo);
         } else {
             println!("can't get local memory info.");
         }
         if let Ok(meminfo) = adapter.query_mem_info(0, false) {
-            println!("Nonlocal Memory Info: {:?}", meminfo);
         } else {
             println!("can't get non-local memory info.");
         }
@@ -42,7 +40,6 @@ fn main() {
         for mut output in adapter.enumerate_outputs() {
             // get and print output descriptions
             if let Ok(desc) = output.get_desc() {
-                println!("\t{}", desc);
             } else {
                 println!("can't get adapter description.");
             }
@@ -71,7 +68,7 @@ fn main() {
     // create the swapchain from this hwnd
     let mut swapchain = factory.create_swapchain_for_hwnd(
         &command_queue, hwnd, &redirect::swapchain::SwapChainDesc::new(
-            redirect::format::DXGI_FORMAT_R8G8B8A8_UNORM
+            DXGI_FORMAT_R8G8B8A8_UNORM
         ), None, None
     ).expect("swap chain creation failed");
 

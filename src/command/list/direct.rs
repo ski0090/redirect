@@ -8,6 +8,8 @@
 
 //! direct command lists
 
+use winapi::um::d3d12::{D3D12_CPU_DESCRIPTOR_HANDLE, ID3D12CommandAllocator, ID3D12GraphicsCommandList};
+
 use super::*;
 
 
@@ -35,7 +37,7 @@ pub struct DirectCommandList {
 impl DirectCommandList {
     /// start command recording. [more](https://msdn.microsoft.com/library/windows/desktop/dn903895(v=vs.85).aspx)
     pub fn start_graphics<'b>(
-        mut self, alloc: &'b mut DirectCommandAllocator, 
+        self, alloc: &'b mut DirectCommandAllocator, 
         initial_state: Option<&'b GraphicsPipelineState>
     ) -> Result<DirectCommandListRecording<'b, GraphicsPipelineState>, (WinError, Self)> {
         let p_initial_state = if let Some(initial_state) = initial_state {
@@ -55,7 +57,7 @@ impl DirectCommandList {
 
     /// start command recording. [more](https://msdn.microsoft.com/library/windows/desktop/dn903895(v=vs.85).aspx)
     pub fn start_compute<'b>(
-        mut self, alloc: &'b mut DirectCommandAllocator, 
+        self, alloc: &'b mut DirectCommandAllocator, 
         initial_state: Option<&'b ComputePipelineState>
     ) -> Result<DirectCommandListRecording<'b, ComputePipelineState>, (WinError, Self)> {
         let p_initial_state = if let Some(initial_state) = initial_state {
@@ -96,9 +98,12 @@ impl<'a, P: 'a + PipelineState> DirectCommandListRecording<'a, P> {
         } else {
             (0, ::std::ptr::null())
         };
+        let dsv = D3D12_CPU_DESCRIPTOR_HANDLE{
+            ptr:dsv.ptr
+        };
         unsafe {
             self.ptr.ClearDepthStencilView(
-                dsv.into(),
+                dsv,
                 ::std::mem::transmute(flags), 
                 depth, stencil, numrects, prects
             );
@@ -267,7 +272,7 @@ impl<'a, P: 'a + PipelineState> DirectCommandListRecording<'a, P> {
 
     /// reset a command list back to the initial state. [more](https://msdn.microsoft.com/library/windows/desktop/dn903895(v=vs.85).aspx)
     pub fn reset<'b, T: PipelineState+'b>(
-        mut self, alloc: &'b mut DirectCommandAllocator, 
+        self, alloc: &'b mut DirectCommandAllocator, 
         initial_state: Option<&'b T>
     ) -> Result<DirectCommandListRecording<'b, T>, (WinError, Self)> {
         let p_initial_state = if let Some(initial_state) = initial_state {
@@ -287,7 +292,7 @@ impl<'a, P: 'a + PipelineState> DirectCommandListRecording<'a, P> {
 
     /// close the current recording
     #[inline]
-    pub fn close(mut self) -> Result<DirectCommandList, WinError> {
+    pub fn close(self) -> Result<DirectCommandList, WinError> {
         unsafe{
             WinError::from_hresult_or_ok(self.ptr.Close(), move || DirectCommandList{
                 ptr: self.ptr

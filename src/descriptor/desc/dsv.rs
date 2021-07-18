@@ -9,6 +9,7 @@
 //! depth stencil view description
 
 use format::DxgiFormat;
+use winapi::um::d3d12::{D3D12_DSV_DIMENSION, D3D12_DSV_DIMENSION_TEXTURE1D, D3D12_DSV_DIMENSION_TEXTURE1DARRAY, D3D12_DSV_DIMENSION_TEXTURE2D, D3D12_DSV_DIMENSION_TEXTURE2DARRAY, D3D12_DSV_DIMENSION_TEXTURE2DMS, D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY};
 
 /// describes a depth stencil view
 #[derive(Copy, Clone, Debug)]
@@ -103,7 +104,7 @@ impl Default for DsvFlags {
 #[derive(Copy, Clone, Debug)]
 pub(crate) struct DsvDescBindHelper {
     format: DxgiFormat,
-    view_dimension: ::winapi::D3D12_DSV_DIMENSION,
+    view_dimension: D3D12_DSV_DIMENSION,
     flags: DsvFlags,
     a: [u32; 3],
 }
@@ -117,25 +118,25 @@ impl From<DsvDesc> for DsvDescBindHelper{
             ret.flags = desc.flags;
             match desc.dimension {
                 DsvDimension::Tex1D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE1D;
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE1D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 DsvDimension::Tex1DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 DsvDimension::Tex2D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE2D;
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE2D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 DsvDimension::Tex2DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 DsvDimension::Tex2DMs =>
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE2DMS,
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE2DMS,
                 DsvDimension::Tex2DMsArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                    ret.view_dimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
             }

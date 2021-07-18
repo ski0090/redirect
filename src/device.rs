@@ -9,9 +9,10 @@
 //! defines `Device`, interface for a 3D display adapter
 
 use comptr::ComPtr;
-use winapi::ID3D12Device;
+use winapi::ctypes::c_void;
+use winapi::um::d3d12::{D3D12CreateDevice, D3D12_COMMAND_LIST_TYPE_BUNDLE, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_QUEUE_DESC, D3D12_HEAP_DESC, D3D12_RESOURCE_ALLOCATION_INFO, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ, ID3D12Device, IID_ID3D12CommandAllocator, IID_ID3D12CommandQueue, IID_ID3D12Device, IID_ID3D12Fence, IID_ID3D12GraphicsCommandList, IID_ID3D12Heap, IID_ID3D12Resource, IID_ID3D12RootSignature};
 use error::WinError;
-use std::os::raw::c_void;
+use winapi::um::d3dcommon::D3D_FEATURE_LEVEL;
 use factory::Adapter;
 use command::{CommandQueue, CommandQueueDesc, DirectCommandAllocator, BundleCommandAllocator, DirectCommandListRecording, BundleRecording, DirectCommandList, Bundle};
 use resource::*;
@@ -33,16 +34,16 @@ impl Device {
         adapter: Option<&Adapter>, level: FeatureLevel
     ) -> Result<Device, WinError> {
         let padapter = if let Some(adapter) = adapter {
-            adapter.ptr.as_mut_ptr() as *mut ::winapi::IUnknown
+            adapter.ptr.as_mut_ptr() as *mut ::winapi::um::unknwnbase::IUnknown
         } else {
             ::std::ptr::null_mut()
         };
         unsafe {
-            let mut ptr: *mut ID3D12Device = ::std::mem::uninitialized();
-            let hr = ::d3d12::D3D12CreateDevice(
+            let mut ptr: *mut ID3D12Device = std::ptr::null_mut();
+            let hr = D3D12CreateDevice(
                 padapter,
-                level.into(),
-                &::dxguid::IID_ID3D12Device,
+                level.bits(),
+                &IID_ID3D12Device,
                 &mut ptr as *mut *mut _ as *mut *mut c_void
             );
             WinError::from_hresult_or_ok(hr, || Device{
@@ -61,10 +62,10 @@ impl Device {
             let length = (*pblob).GetBufferSize();
             let pblob = (*pblob).GetBufferPointer();
 
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateRootSignature(
                 node_mask, pblob, length,
-                & ::dxguid::IID_ID3D12RootSignature,
+                & IID_ID3D12RootSignature,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             
@@ -79,10 +80,10 @@ impl Device {
         &mut self, desc: &CommandQueueDesc
     ) -> Result<CommandQueue, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateCommandQueue(
-                desc as *const _ as *const ::winapi::D3D12_COMMAND_QUEUE_DESC,
-                & ::dxguid::IID_ID3D12CommandQueue,
+                desc as *const _ as *const D3D12_COMMAND_QUEUE_DESC,
+                & IID_ID3D12CommandQueue,
                 &mut ret as *mut *mut _ as *mut *mut c_void
             );
 
@@ -95,10 +96,10 @@ impl Device {
     /// attempts to create a direct command allocator
     pub fn create_direct_command_allocator(&mut self) -> Result<DirectCommandAllocator, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateCommandAllocator(
-                ::winapi::D3D12_COMMAND_LIST_TYPE_DIRECT,
-                & ::dxguid::IID_ID3D12CommandAllocator,
+                D3D12_COMMAND_LIST_TYPE_DIRECT,
+                & IID_ID3D12CommandAllocator,
                 &mut ret as *mut *mut _ as *mut *mut c_void
             );
 
@@ -111,10 +112,10 @@ impl Device {
     /// attempts to create a bundle command allocator
     pub fn create_bundle_allocator(&mut self) -> Result<BundleCommandAllocator, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateCommandAllocator(
-                ::winapi::D3D12_COMMAND_LIST_TYPE_BUNDLE,
-                & ::dxguid::IID_ID3D12CommandAllocator,
+                D3D12_COMMAND_LIST_TYPE_BUNDLE,
+                & IID_ID3D12CommandAllocator,
                 &mut ret as *mut *mut _ as *mut *mut c_void
             );
 
@@ -127,10 +128,10 @@ impl Device {
     /// attempts to create a heap
     pub fn create_heap(&mut self, desc: &HeapDesc) -> Result<RawHeap, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateHeap(
-                desc as *const _ as *const ::winapi::D3D12_HEAP_DESC,
-                & ::dxguid::IID_ID3D12Heap,
+                desc as *const _ as *const D3D12_HEAP_DESC,
+                &IID_ID3D12Heap,
                 &mut ret as *mut *mut _ as *mut *mut c_void
             );
 
@@ -147,19 +148,19 @@ impl Device {
         initial_state: ResourceStates
     ) -> Result<RawResource, WinError> {
         let initial_state = match heap_properties.heap_type {
-            HeapType::UPLOAD => ::winapi::D3D12_RESOURCE_STATE_GENERIC_READ,
-            HeapType::READBACK => ::winapi::D3D12_RESOURCE_STATE_COPY_DEST,
+            HeapType::UPLOAD => D3D12_RESOURCE_STATE_GENERIC_READ,
+            HeapType::READBACK => D3D12_RESOURCE_STATE_COPY_DEST,
             _ => unsafe {::std::mem::transmute(initial_state)},
         };
         unsafe {
-            let mut ptr = ::std::mem::uninitialized();
+            let mut ptr = std::ptr::null_mut();
             let hr = self.ptr.CreateCommittedResource(
                 heap_properties as *const _ as *const _,
                 ::std::mem::transmute(heap_flags),
                 desc as *const _ as *const _,
                 initial_state,
                 ::std::ptr::null(),
-                & ::dxguid::IID_ID3D12Resource,
+                & IID_ID3D12Resource,
                 &mut ptr as *mut _ as *mut _
             );
 
@@ -170,11 +171,11 @@ impl Device {
     /// attempts to create a fence
     pub fn create_fence(&mut self, initial_value: u64, flags: FenceFlags) -> Result<Fence, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateFence(
                 initial_value,
                 ::std::mem::transmute(flags),
-                & ::dxguid::IID_ID3D12Fence,
+                &IID_ID3D12Fence,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
 
@@ -187,19 +188,18 @@ impl Device {
     /// get resource allocation info from the resource description.
     /// Notice that unlike `ID3D12Device::GetResourceAllocationInfo`, 
     /// `node_idx` is used instead of `visibleNodeMask`.
-    pub fn get_resource_alloc_info(&mut self, desc: &ResourceDesc, node_idx: u32) -> ResourceAllocInfo {
+    pub fn get_resource_alloc_info(&mut self, desc: &ResourceDesc, node_idx: u32) -> D3D12_RESOURCE_ALLOCATION_INFO {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
             // TODO: double check
             let visible_mask = if node_idx == 0 {
                 0
             } else {
                 1 << node_idx
             };
-            self.ptr.GetResourceAllocationInfo(
-                visible_mask, 1, desc as *const _ as *const _, &mut ret
-            );
-            ::std::mem::transmute(ret)
+            let info = self.ptr.GetResourceAllocationInfo(
+                visible_mask, 1, desc as *const _ as *const _);
+
+            info
         }
     }
 
@@ -211,19 +211,19 @@ impl Device {
     ) -> Result<RawResource, WinError> {
         let heap_properties = heap.get_desc().properties;
         let initial_state = match heap_properties.heap_type {
-            HeapType::UPLOAD => ::winapi::D3D12_RESOURCE_STATE_GENERIC_READ,
-            HeapType::READBACK => ::winapi::D3D12_RESOURCE_STATE_COPY_DEST,
+            HeapType::UPLOAD => D3D12_RESOURCE_STATE_GENERIC_READ,
+            HeapType::READBACK => D3D12_RESOURCE_STATE_COPY_DEST,
             _ => ::std::mem::transmute(initial_state),
         };
 
-        let mut ptr = ::std::mem::uninitialized();
+        let mut ptr = std::ptr::null_mut();
         let hr = self.ptr.CreatePlacedResource(
             heap.ptr.as_mut_ptr(),
             heap_offset,
             desc as *const _ as *const _,
             initial_state,
             ::std::ptr::null(),
-            & ::dxguid::IID_ID3D12Resource,
+            & IID_ID3D12Resource,
             &mut ptr as *mut _ as *mut _
         );
 
@@ -243,12 +243,12 @@ impl Device {
             ::std::ptr::null_mut()
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateCommandList(
                 node_mask,
-                ::winapi::D3D12_COMMAND_LIST_TYPE_DIRECT, 
+                D3D12_COMMAND_LIST_TYPE_DIRECT, 
                 alloc.ptr.as_mut_ptr(), pinitial_state, 
-                & ::dxguid::IID_ID3D12GraphicsCommandList,
+                & IID_ID3D12GraphicsCommandList,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
 
@@ -271,12 +271,12 @@ impl Device {
             ::std::ptr::null_mut()
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = self.ptr.CreateCommandList(
                 node_mask,
-                ::winapi::D3D12_COMMAND_LIST_TYPE_BUNDLE, 
+                D3D12_COMMAND_LIST_TYPE_BUNDLE, 
                 alloc.ptr.as_mut_ptr(), initial_state, 
-                & ::dxguid::IID_ID3D12GraphicsCommandList,
+                & IID_ID3D12GraphicsCommandList,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
 
@@ -309,10 +309,10 @@ impl Default for FeatureLevel {
     }
 }
 
-impl From<FeatureLevel> for ::winapi::D3D_FEATURE_LEVEL {
+impl From<FeatureLevel> for D3D_FEATURE_LEVEL {
     #[inline]
     fn from(level: FeatureLevel) -> Self {
-        ::winapi::D3D_FEATURE_LEVEL(level.bits())
+        D3D_FEATURE_LEVEL::from(level.bits())
     }
 }
 
@@ -327,10 +327,10 @@ macro_rules! impl_device_child {
     ($Child: ty, $ptr: ident) => {
         impl DeviceChild for $Child {
             fn get_device(&mut self) -> Result<Device, WinError> { unsafe {
-                let mut ptr: *mut ::winapi::ID3D12Device = ::std::mem::uninitialized();
+                let mut ptr: *mut ID3D12Device = std::ptr::null_mut();
                 let hr = self.$ptr.GetDevice(
-                    & ::dxguid::IID_ID3D12Device,
-                    &mut ptr as *mut *mut _ as *mut *mut ::std::os::raw::c_void
+                    & IID_ID3D12Device,
+                    &mut ptr as *mut *mut _ as *mut *mut c_void
                 );
                 ::error::WinError::from_hresult_or_ok(hr, || {
                     ::device::Device{ptr: ::comptr::ComPtr::new(ptr)}

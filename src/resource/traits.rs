@@ -12,6 +12,7 @@ use super::raw::RawResource;
 use error::WinError;
 use descriptor::*;
 use device::Device;
+use winapi::shared::dxgiformat::{DXGI_FORMAT_R16_UINT, DXGI_FORMAT_R32_UINT, DXGI_FORMAT_UNKNOWN};
 use super::buffer::BufferSlice;
 use pipeline::ia::{IndexBufferView, VertexBufferView};
 
@@ -103,7 +104,7 @@ pub unsafe trait Buffer: Resource {
     ) {
         debug_assert!(buf.is_compatible_with(slice));
         csu_heap.create_srv(device, Some(buf.as_raw()), Some(&SrvDesc{
-            format: ::format::DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
+            format: DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
             dimension: SrvDimension::Buffer(SrvBufferDesc{
                 offset: slice.offset, num_elements: slice.length,
                 byte_stride: slice.byte_stride, raw: 0 // TODO: support raw buffers?
@@ -121,7 +122,7 @@ pub unsafe trait Buffer: Resource {
     ) {
         debug_assert!(buf.is_compatible_with(slice));
         csu_heap.create_uav(device, Some(buf.as_raw()), None, Some(&UavDesc{
-            format: ::format::DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
+            format: DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
             dimension: UavDimension::Buffer(UavBufferDesc{
                 offset: slice.offset, num_elements: slice.length,
                 byte_stride: slice.byte_stride, 
@@ -143,7 +144,7 @@ pub unsafe trait Buffer: Resource {
         debug_assert!(counter_offset%4 == 0);
         debug_assert!(counter_offset <= counter.get_size());
         csu_heap.create_uav(device, Some(buf.as_raw()), Some(counter.as_raw()), Some(&UavDesc{
-            format: ::format::DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
+            format: DXGI_FORMAT_UNKNOWN, // TODO: double check format for buffer
             dimension: UavDimension::Buffer(UavBufferDesc{
                 offset: slice.offset, num_elements: slice.length,
                 byte_stride: slice.byte_stride, 
@@ -167,7 +168,7 @@ pub unsafe trait Buffer: Resource {
         debug_assert!(size as u64 <= self.get_size());
         IndexBufferView{
             location: self.as_raw_mut().get_gpu_vaddress(), size,
-            format: ::format::DXGI_FORMAT_R32_UINT,
+            format: DXGI_FORMAT_R32_UINT,
         }
     }
 
@@ -177,7 +178,7 @@ pub unsafe trait Buffer: Resource {
         debug_assert!(size as u64 <= self.get_size());
         IndexBufferView{
             location: self.as_raw_mut().get_gpu_vaddress(), size,
-            format: ::format::DXGI_FORMAT_R16_UINT,
+            format: DXGI_FORMAT_R16_UINT,
         }
     }
 }
@@ -267,7 +268,7 @@ pub unsafe trait Texture: Resource {
     #[inline]
     fn get_format(&mut self) -> ::format::DxgiFormat {
         let desc = self.as_raw_mut().get_desc();
-        desc.format
+        desc.Format
     }
 
     /// Create a srv for this texture on `csu_heap` at `index`
@@ -312,14 +313,12 @@ pub unsafe trait Tex2D: Texture {
     /// get the width of the texture
     #[inline]
     fn get_width(&mut self) -> u64 {
-        let desc = self.as_raw_mut().get_desc();
-        desc.width
+        self.as_raw_mut().get_desc().Width
     }
 
     #[inline]
     fn get_height(&mut self) -> u32 {
-        let desc = self.as_raw_mut().get_desc();
-        desc.height
+        self.as_raw_mut().get_desc().Height
     }
 
     fn create_srv_with_desc<DH: CsuHeap, T: AllowShaderResource + Tex2D>(

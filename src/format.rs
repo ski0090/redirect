@@ -8,9 +8,10 @@
 
 //! formats used by direct3d
 
-pub use ::winapi::dxgiformat::*;
+use winapi::{shared::{dxgiformat::DXGI_FORMAT, minwindef::{BOOL, FALSE, TRUE}, ntdef::WCHAR}, um::d3d12::D3D12_RECT};
+
 pub type DxgiFormat = DXGI_FORMAT;
-pub type Rect = ::winapi::D3D12_RECT;
+pub type Rect = D3D12_RECT;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
@@ -43,23 +44,23 @@ impl Viewport {
 /// ffi for win32 boolean values
 #[repr(C)]
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct Bool{inner: ::winapi::BOOL}
+pub struct Bool{inner: BOOL}
 
 impl Bool {
     #[inline]
-    pub fn from_win_bool(b: ::winapi::BOOL) -> Self{
-        debug_assert!(b== ::winapi::TRUE || b== ::winapi::FALSE);
+    pub fn from_win_bool(b: BOOL) -> Self{
+        debug_assert!(b== TRUE || b== FALSE);
         Bool{inner:b}
     }
 
     #[inline]
-    pub fn to_win_bool(self) -> ::winapi::BOOL {
+    pub fn to_win_bool(self) -> BOOL {
         self.inner
     }
 
     #[inline]
     pub fn is_true(self) -> bool {
-        self.inner == ::winapi::TRUE
+        self.inner == TRUE
     }
 }
 
@@ -67,14 +68,14 @@ impl From<bool> for Bool {
     #[inline]
     fn from(v: bool) -> Bool {
         if v {
-            Bool{inner: ::winapi::TRUE}
+            Bool{inner: TRUE}
         } else {
-            Bool{inner: ::winapi::FALSE}
+            Bool{inner: FALSE}
         }
     }
 }
 
-impl From<Bool> for ::winapi::BOOL {
+impl From<Bool> for BOOL {
     #[inline]
     fn from(v: Bool) -> Self {
         v.inner
@@ -83,7 +84,7 @@ impl From<Bool> for ::winapi::BOOL {
 
 /// convert a possibly null ended `[WCHAR]` into a `OsString`
 #[inline]
-pub fn from_wchar_slice(chars: &[::winapi::WCHAR]) -> ::std::ffi::OsString {
+pub fn from_wchar_slice(chars: &[WCHAR]) -> ::std::ffi::OsString {
     let mut end = chars.len();
     for (i, wchar) in chars.iter().enumerate() {
         if *wchar == 0 {

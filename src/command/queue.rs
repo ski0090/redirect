@@ -5,10 +5,9 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
-
 use comptr::ComPtr;
-use winapi::ID3D12CommandQueue;
 use error::WinError;
+use winapi::um::d3d12::{D3D12_COMMAND_QUEUE_DESC, ID3D12CommandList, ID3D12CommandQueue};
 use super::list::*;
 use smallvec::SmallVec;
 use fence::Fence;
@@ -49,7 +48,7 @@ impl CommandQueue {
     /// all the resources it is referencing is ready for use by the GPU
     #[inline]
     pub unsafe fn execute_command_list(&mut self, list: &DirectCommandList) {
-        let mut ptr = list.ptr.as_mut_ptr() as *mut ::winapi::ID3D12CommandList;
+        let mut ptr = list.ptr.as_mut_ptr() as *mut ID3D12CommandList;
         self.ptr.ExecuteCommandLists(1, &mut ptr);
     }
 
@@ -60,7 +59,7 @@ impl CommandQueue {
     /// that these lists along with the underlying allocators, and all
     /// the resources they are referencing is ready for use by the GPU
     pub unsafe fn execute_command_lists(&mut self, lists: &[DirectCommandList]) {
-        let mut raw_lists: SmallVec<[*mut ::winapi::ID3D12CommandList; 8]> = Default::default();
+        let mut raw_lists: SmallVec<[*mut ID3D12CommandList; 8]> = Default::default();
         for list in lists {
             raw_lists.push(list.ptr.as_mut_ptr() as *mut _);
         }
@@ -89,11 +88,9 @@ impl CommandQueue {
     // TODO: add method for PIX events?
 
     /// get description of this queue
-    pub fn get_desc(&mut self) -> CommandQueueDesc {
+    pub fn get_desc(&mut self) -> D3D12_COMMAND_QUEUE_DESC {
         unsafe{
-            let mut ret = ::std::mem::uninitialized();
-            self.ptr.GetDesc(&mut ret);
-            ::std::mem::transmute(ret)
+            self.ptr.GetDesc()
         }
     }
 }
@@ -112,7 +109,7 @@ pub struct CommandQueueDesc {
     pub node_mask: u32,
 }
 
-impl From<CommandQueueDesc> for ::winapi::D3D12_COMMAND_QUEUE_DESC {
+impl From<CommandQueueDesc> for D3D12_COMMAND_QUEUE_DESC {
     #[inline]
     fn from(desc: CommandQueueDesc) -> Self {
         unsafe { ::std::mem::transmute(desc) }

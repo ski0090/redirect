@@ -8,7 +8,7 @@
 
 //! error types
 
-use ::winapi::{HRESULT, SUCCEEDED};
+use winapi::shared::{ntdef::HRESULT, winerror::{DXGI_ERROR_DEVICE_HUNG, DXGI_ERROR_DEVICE_REMOVED, DXGI_ERROR_DEVICE_RESET, DXGI_ERROR_DRIVER_INTERNAL_ERROR, DXGI_ERROR_INVALID_CALL, E_INVALIDARG, E_OUTOFMEMORY, SUCCEEDED}};
 
 /// an winerror
 // TODO: add useful error messages
@@ -21,13 +21,13 @@ impl WinError {
     #[inline]
     pub fn description(&self) -> &'static str {
         match self.hr {
-            ::winapi::E_OUTOFMEMORY => "E_OUYOFMEMORY",
-            ::winapi::E_INVALIDARG => "E_INVALIDARG",
-            ::winapi::DXGI_ERROR_INVALID_CALL => "DXGI_ERROR_INVALID_CALL",
-            ::winapi::DXGI_ERROR_DEVICE_HUNG => "DXGI_ERROR_DEVICE_HUNG",
-            ::winapi::DXGI_ERROR_DEVICE_REMOVED => "DXGI_ERROR_DEVICE_REMOVED",
-            ::winapi::DXGI_ERROR_DEVICE_RESET => "DXGI_ERROR_DEVICE_RESET",
-            ::winapi::DXGI_ERROR_DRIVER_INTERNAL_ERROR => "DXGI_ERROR_DRIVER_INTERNAL_ERROR",
+            E_OUTOFMEMORY => "E_OUYOFMEMORY",
+            E_INVALIDARG => "E_INVALIDARG",
+            DXGI_ERROR_INVALID_CALL => "DXGI_ERROR_INVALID_CALL",
+            DXGI_ERROR_DEVICE_HUNG => "DXGI_ERROR_DEVICE_HUNG",
+            DXGI_ERROR_DEVICE_REMOVED => "DXGI_ERROR_DEVICE_REMOVED",
+            DXGI_ERROR_DEVICE_RESET => "DXGI_ERROR_DEVICE_RESET",
+            DXGI_ERROR_DRIVER_INTERNAL_ERROR => "DXGI_ERROR_DRIVER_INTERNAL_ERROR",
             _ => "Other unknown errors",
         }
     }

@@ -7,15 +7,13 @@
 // except according to those terms.
 
 //! Raw resource
-
-use winapi::ID3D12Resource;
 use comptr::ComPtr;
 use error::WinError;
-use super::*;
+use winapi::um::d3d12::{D3D12_BOX, D3D12_GPU_VIRTUAL_ADDRESS, D3D12_HEAP_FLAGS, D3D12_HEAP_PROPERTIES, D3D12_RANGE, D3D12_RESOURCE_DESC, ID3D12Resource};
 use format::Box3u;
 
 /// a raw resource
-#[derive(Clone, Debug)]
+#[derive(Clone,Debug)]
 pub struct RawResource {
     pub(crate) ptr: ComPtr<ID3D12Resource>,
 }
@@ -23,11 +21,9 @@ pub struct RawResource {
 impl RawResource {
     /// get resource description
     #[inline]
-    pub fn get_desc(&mut self) -> ResourceDesc {
+    pub fn get_desc(&mut self) -> D3D12_RESOURCE_DESC {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            self.ptr.GetDesc(&mut ret);
-            ::std::mem::transmute(ret)
+            self.ptr.GetDesc()
         }
     }
 
@@ -40,13 +36,13 @@ impl RawResource {
     /// attempt to get the attached heap's info. This method would only work
     /// on committed or placed resources, not on reserved ones.
     #[inline]
-    pub fn get_heap_info(&mut self) -> Result<(HeapProperties, HeapFlags), WinError> {
+    pub fn get_heap_info(&mut self) -> Result<(D3D12_HEAP_PROPERTIES, D3D12_HEAP_FLAGS), WinError> {
         unsafe {
-            let mut hp = ::std::mem::uninitialized();
-            let mut hf = ::std::mem::uninitialized();
-            let hr = self.ptr.GetHeapProperties(&mut hp, &mut hf);
+            let hp:*mut D3D12_HEAP_PROPERTIES = std::ptr::null_mut();
+            let hf:*mut D3D12_HEAP_FLAGS = std::ptr::null_mut();
+            let hr = self.ptr.GetHeapProperties(hp, hf);
             WinError::from_hresult_or_ok(hr, || (
-                ::std::mem::transmute(hp), ::std::mem::transmute(hf)
+                (*hp), (*hf)
             ))
         }
     }
@@ -55,7 +51,7 @@ impl RawResource {
     pub unsafe fn map(
         &mut self, subresource: u32, range: Option<(usize, usize)>
     ) -> Result<*mut u8, WinError> {
-        let mut d3drange: ::winapi::D3D12_RANGE = ::std::mem::uninitialized();
+        let mut d3drange: D3D12_RANGE = std::mem::zeroed();
         let prange = if let Some(range) = range {
             // assert!(range.0<=range.1);
             d3drange.Begin = range.0 as _;
@@ -64,7 +60,7 @@ impl RawResource {
         } else {
             ::std::ptr::null()
         };
-        let mut ret = ::std::mem::uninitialized();
+        let mut ret = std::ptr::null_mut();
         let hr = self.ptr.Map(subresource, prange, &mut ret);
         WinError::from_hresult_or_ok(hr, || ret as *mut u8)
     }
@@ -73,7 +69,7 @@ impl RawResource {
     pub unsafe fn unmap(
         &mut self, subresource: u32, range: Option<(usize, usize)>
     ) {
-        let mut d3drange: ::winapi::D3D12_RANGE = ::std::mem::uninitialized();
+        let mut d3drange: D3D12_RANGE = std::mem::zeroed();
         let prange = if let Some(range) = range {
             // assert!(range.0<=range.1);
             d3drange.Begin = range.0 as _;
@@ -91,7 +87,7 @@ impl RawResource {
         src_subresource: u32, src_box: Option<&Box3u>
     ) -> Result<(), WinError> {
         let pbox = if let Some(src_box) = src_box {
-            src_box as *const _ as *const ::winapi::D3D12_BOX
+            src_box as *const _ as *const D3D12_BOX
         } else {
             ::std::ptr::null()
         };
@@ -110,7 +106,7 @@ impl RawResource {
         src_desc: ResourceChunkDesc
     ) -> Result<(), WinError> {
         let pbox = if let Some(dst_box) = dst_box {
-            dst_box as *const _ as *const ::winapi::D3D12_BOX
+            dst_box as *const _ as *const D3D12_BOX
         } else {
             ::std::ptr::null()
         };
@@ -142,7 +138,7 @@ pub struct GpuVAddress {
     pub(crate) ptr: u64,
 }
 
-impl From<GpuVAddress> for ::winapi::D3D12_GPU_VIRTUAL_ADDRESS {
+impl From<GpuVAddress> for D3D12_GPU_VIRTUAL_ADDRESS {
     #[inline]
     fn from(addr: GpuVAddress) -> Self {
         unsafe {::std::mem::transmute(addr)}

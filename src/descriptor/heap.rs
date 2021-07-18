@@ -9,12 +9,11 @@
 //! a descriptor heap is where the descriptors resides on
 
 use comptr::ComPtr;
-use winapi::{ID3D12DescriptorHeap, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER};
 use resource::RawResource;
 use error::WinError;
 use device::Device;
+use winapi::um::d3d12::{D3D12_CPU_DESCRIPTOR_HANDLE, D3D12_DESCRIPTOR_HEAP_DESC, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, D3D12_DESCRIPTOR_HEAP_TYPE, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_GPU_DESCRIPTOR_HANDLE, ID3D12DescriptorHeap, IID_ID3D12DescriptorHeap};
 use super::desc::{SrvDesc, CbvDesc, RtvDesc, DsvDesc, UavDesc, SamplerDesc};
-
 
 /// descriptor heap builder struct
 #[derive(Copy, Clone, Debug)]
@@ -33,127 +32,127 @@ impl DescriptorHeapBuilder {
     }
 
     pub fn build_csu_heap_shader_visible(&self, device: &mut Device) -> Result<CsuHeapSv, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
             NodeMask: self.node_mask,
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, & IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || CsuHeapSv{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
             })
         }
     }
 
     pub fn build_csu_heap(&self, device: &mut Device) -> Result<CsuHeapNsv, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
             NodeMask: self.node_mask,
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, & IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || CsuHeapNsv{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
             })
         }
     }
 
     pub fn build_rtv_heap(&self, device: &mut Device) -> Result<RtvHeap, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_NONE, // can't be shader visible
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_NONE, // can't be shader visible
             NodeMask: self.node_mask
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, &IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || RtvHeap{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)
             })
         }
     }
 
     pub fn build_dsv_heap(&self, device: &mut Device) -> Result<DsvHeap, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_NONE, // can't be shader visible
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_NONE, // can't be shader visible
             NodeMask: self.node_mask
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, & IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || DsvHeap{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)
             })
         }
     }
 
     pub fn build_sampler_heap_shader_visible(&self, device: &mut Device) -> Result<SamplerHeapSv, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
             NodeMask: self.node_mask
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, &IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || SamplerHeapSv{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
             })
         }
     }
 
     pub fn build_sampler_heap(&self, device: &mut Device) -> Result<SamplerHeapNsv, WinError> {
-        let desc = ::winapi::D3D12_DESCRIPTOR_HEAP_DESC{
-            Type: ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
+        let desc = D3D12_DESCRIPTOR_HEAP_DESC{
+            Type: D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER,
             NumDescriptors: self.num_descriptors,
-            Flags: ::winapi::D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+            Flags: D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
             NodeMask: self.node_mask
         };
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret = std::ptr::null_mut();
             let hr = device.ptr.CreateDescriptorHeap(
-                &desc, & ::dxguid::IID_ID3D12DescriptorHeap,
+                &desc, &IID_ID3D12DescriptorHeap,
                 &mut ret as *mut *mut _ as *mut *mut _
             );
             WinError::from_hresult_or_ok(hr, || SamplerHeapNsv{
                 ptr: ComPtr::new(ret),
                 num_descriptors: self.num_descriptors,
-                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(::winapi::D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+                handle_increment_size: device.ptr.GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
             })
         }
     }
@@ -205,7 +204,7 @@ impl CsuHeap for $Heap{
         let cdesc = if let Some(desc) = desc {
             desc.into_cstruct()
         } else {
-            unsafe {::std::mem::uninitialized()}
+            unsafe {std::mem::zeroed()}
         };
         let pdesc = if desc.is_some() { &cdesc as *const _ } else {::std::ptr::null()};
         unsafe {
@@ -236,7 +235,7 @@ impl CsuHeap for $Heap{
         let cdesc = if let Some(desc) = desc {
             desc.into_cstruct()
         } else {
-            unsafe {::std::mem::uninitialized()}
+            unsafe {std::mem::zeroed()}
         };
         let pdesc = if desc.is_some() { &cdesc as *const _ } else {::std::ptr::null()};
         unsafe {
@@ -303,7 +302,7 @@ impl RtvHeap {
         let cdesc = if let Some(desc) = desc {
             desc.into_cstruct()
         } else {
-            unsafe {::std::mem::uninitialized()}
+            unsafe {std::mem::zeroed()}
         };
 
         let pdesc = if desc.is_some() { &cdesc as *const _ } else {::std::ptr::null()};
@@ -339,7 +338,7 @@ impl DsvHeap{
         let cdesc = if let Some(desc) = desc {
             desc.into_cstruct()
         } else {
-            unsafe {::std::mem::uninitialized()}
+            unsafe {std::mem::zeroed()}
         };
 
         let pdesc = if desc.is_some() { &cdesc as *const _ } else {::std::ptr::null()};
@@ -397,13 +396,13 @@ impl_sampler_heap!(SamplerHeapSv);
 
 /// represents a descriptor heap
 pub trait DescriptorHeap {
-    type CpuHandle: Into<::winapi::D3D12_CPU_DESCRIPTOR_HANDLE>;
-    type GpuHandle: Into<::winapi::D3D12_GPU_DESCRIPTOR_HANDLE>;
+    type CpuHandle: Into<D3D12_CPU_DESCRIPTOR_HANDLE>;
+    type GpuHandle: Into<D3D12_GPU_DESCRIPTOR_HANDLE>;
     /// get the raw pointer
     fn as_raw_ptr(&mut self) -> &mut ComPtr<ID3D12DescriptorHeap>;
 
     /// get type of the heap
-    fn get_type(&self) -> ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE;
+    fn get_type(&self) -> D3D12_DESCRIPTOR_HEAP_TYPE;
 
     /// get Cpu handle of a descriptor at `offset` on the heap
     fn get_cpu_handle(&mut self, offset: u32) -> Self::CpuHandle;
@@ -426,7 +425,7 @@ macro_rules! impl_handles {
             pub(crate) ptr: usize,
         }
 
-        impl From<$CpuHandle> for ::winapi::D3D12_CPU_DESCRIPTOR_HANDLE {
+        impl From<$CpuHandle> for D3D12_CPU_DESCRIPTOR_HANDLE {
             #[inline]
             fn from(h: $CpuHandle) -> Self {
                 unsafe { ::std::mem::transmute(h) }
@@ -439,7 +438,7 @@ macro_rules! impl_handles {
             pub(crate) ptr: u64,
         }
 
-        impl From<$GpuHandle> for ::winapi::D3D12_GPU_DESCRIPTOR_HANDLE {
+        impl From<$GpuHandle> for D3D12_GPU_DESCRIPTOR_HANDLE {
             #[inline]
             fn from(h: $GpuHandle) -> Self {
                 unsafe { ::std::mem::transmute(h) }
@@ -459,12 +458,12 @@ macro_rules! impl_dh {
             type GpuHandle = $GpuHandle;
             type CpuHandle = $CpuHandle;
             #[inline]
-            fn get_type(&self) -> ::winapi::D3D12_DESCRIPTOR_HEAP_TYPE {
+            fn get_type(&self) -> ::winapi::um::d3d12::D3D12_DESCRIPTOR_HEAP_TYPE {
                 $Type
             }
 
             #[inline]
-            fn as_raw_ptr(&mut self) -> &mut ComPtr<ID3D12DescriptorHeap> {
+            fn as_raw_ptr(&mut self) -> &mut ComPtr<::winapi::um::d3d12::ID3D12DescriptorHeap> {
                 &mut self.$ptr
             }
 
@@ -472,9 +471,7 @@ macro_rules! impl_dh {
                 assert!(offset<self.$msize);
                 let mut ret = $CpuHandle{ptr: 0};
                 unsafe {
-                    self.$ptr.GetCPUDescriptorHandleForHeapStart(
-                        &mut ret as *mut _ as *mut _
-                    );
+                    ret.ptr = self.$ptr.GetCPUDescriptorHandleForHeapStart().ptr;
                 }
                 ret.ptr += offset as usize *self.$item_size as usize;
                 ret
@@ -484,9 +481,7 @@ macro_rules! impl_dh {
                 assert!(offset<self.$msize);
                 let mut ret = $GpuHandle{ptr: 0};
                 unsafe {
-                    self.$ptr.GetGPUDescriptorHandleForHeapStart(
-                        &mut ret as *mut _ as *mut _
-                    );
+                    ret.ptr = self.$ptr.GetGPUDescriptorHandleForHeapStart().ptr;
                 }
                 ret.ptr += offset as u64 *self.$item_size as u64;
                 ret

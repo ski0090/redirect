@@ -8,12 +8,12 @@
 
 //! Defines a raw heap
 
-use winapi::ID3D12Heap;
 use comptr::ComPtr;
+use winapi::um::d3d12::ID3D12Heap;
 use super::{HeapDesc, HeapAlignment};
 
 /// a continous memory region
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct RawHeap {
     pub(crate) ptr: ComPtr<ID3D12Heap>,
     size: u64,
@@ -35,8 +35,7 @@ impl RawHeap {
     #[inline]
     pub fn get_desc(&mut self) -> HeapDesc {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            self.ptr.GetDesc(&mut ret);
+            let ret = self.ptr.GetDesc();
             ::std::mem::transmute(ret)
         }
     }

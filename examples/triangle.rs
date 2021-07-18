@@ -7,13 +7,14 @@
 // except according to those terms.
 
 //! demonstrates how to draw a triangle on the screen
-
+extern crate winapi;
 extern crate redirect;
 extern crate winit;
 
 use redirect::descriptor::DescriptorHeap;
 use redirect::command::GraphicsCommandList;
 use redirect::resource::{Buffer, CpuWriteBuffer, Texture, DsableTex2D};
+use winapi::shared::dxgiformat::{DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32_FLOAT, DXGI_FORMAT_R8G8B8A8_UNORM};
 
 #[repr(C)]
 #[derive(Copy, Debug, Clone)]
@@ -28,7 +29,8 @@ fn main() {
 
     // initialize a device with the default adapter
     let mut device = redirect::device::Device::new(
-        None, redirect::device::FeatureLevel::L_11_0
+        None, 
+        redirect::device::FeatureLevel::L_11_0
     ).expect("device initialization failed.");
 
     // initialize a command queue from this device with default options
@@ -51,7 +53,7 @@ fn main() {
     // create the swapchain from this hwnd
     let mut swapchain = factory.create_swapchain_for_hwnd(
         &command_queue, hwnd, &redirect::swapchain::SwapChainDesc::new(
-            redirect::format::DXGI_FORMAT_R8G8B8A8_UNORM
+            DXGI_FORMAT_R8G8B8A8_UNORM
         ), None, None
     ).expect("swap chain creation failed");
 
@@ -71,7 +73,7 @@ fn main() {
 
     let mut ds_tex = DsableTex2D::new(
         &mut device, width as u64, height, 1,
-        redirect::format::DXGI_FORMAT_D24_UNORM_S8_UINT
+        DXGI_FORMAT_D24_UNORM_S8_UINT
     ).expect("ds buffer creation failed");
     DsableTex2D::create_dsv(&mut ds_tex, &mut device, &mut dsv_heap, 0);
 
@@ -132,13 +134,13 @@ fn main() {
     psod.vs = Some(vs);
     psod.ps = Some(ps);
     psod.input_layout.elements.push(redirect::pipeline::ia::InputElementDesc::new(
-        &pos_cstr, redirect::format::DXGI_FORMAT_R32G32B32_FLOAT
+        &pos_cstr, DXGI_FORMAT_R32G32B32_FLOAT
     ));
     psod.input_layout.elements.push(redirect::pipeline::ia::InputElementDesc::new(
-        &color_cstr, redirect::format::DXGI_FORMAT_R32G32B32A32_FLOAT
+        &color_cstr, DXGI_FORMAT_R32G32B32A32_FLOAT
     ));
     psod.depth_stencil_state.depth = true.into();
-    psod.rtv_formats[0] = backbuffers[0].get_desc().format;
+    psod.rtv_formats[0] = backbuffers[0].get_desc().Format;
     let pso = psod.build(&mut device).expect("PSO creation failed");
 
     // create a command allocator for direct command list

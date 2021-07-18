@@ -11,9 +11,8 @@
 //! `Adapter` and `Output`.
 
 use comptr::ComPtr;
-use winapi::{IDXGIFactory4, IDXGIAdapter3, IDXGIAdapter1, IDXGISwapChain3, IDXGISwapChain1, IDXGIOutput};
 use error::WinError;
-use std::os::raw::c_void;
+use winapi::{ctypes::c_void, shared::{dxgi::{CreateDXGIFactory1, DXGI_ADAPTER_DESC1, DXGI_OUTPUT_DESC, IDXGIAdapter1, IDXGIOutput}, dxgi1_2::{DXGI_SWAP_CHAIN_DESC1, DXGI_SWAP_CHAIN_FULLSCREEN_DESC, IDXGISwapChain1}, dxgi1_4::{DXGI_MEMORY_SEGMENT_GROUP_LOCAL, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO, IDXGIAdapter3, IDXGIFactory4, IDXGISwapChain3, IID_IDXGIAdapter3, IID_IDXGIFactory4}, ntdef::LUID, windef::{HMONITOR, HWND}}, um::winnt::WCHAR};
 use swapchain::{SwapChain, SwapChainDesc, FullScreenDesc};
 use command::CommandQueue;
 
@@ -27,9 +26,9 @@ impl Factory {
     /// try to create a new DXGI factory
     pub fn new() -> Result<Factory, WinError> {
         unsafe {
-            let mut ptr: *mut IDXGIFactory4 = ::std::mem::uninitialized();
-            let hr = ::dxgi::CreateDXGIFactory1(
-                & ::dxguid::IID_IDXGIFactory4,
+            let mut ptr: *mut IDXGIFactory4 = std::ptr::null_mut();
+            let hr = CreateDXGIFactory1(
+                &IID_IDXGIFactory4,
                 &mut ptr as *mut *mut _ as *mut *mut c_void
             );
             WinError::from_hresult_or_ok(hr, || Factory{
@@ -50,13 +49,13 @@ impl Factory {
     #[inline]
     pub fn create_swapchain_for_hwnd(
         &mut self, queue: &CommandQueue, // FIXME: this should be a command queue
-        hwnd: ::winapi::HWND, // TODO: change?
+        hwnd: HWND, // TODO: change?
         desc: &SwapChainDesc,
         fullscreen_desc: Option<&FullScreenDesc>,
         restrict_output: Option<&Output>
     ) -> Result<SwapChain, WinError> {
         let fullscreen_desc = if let Some(desc) = fullscreen_desc {
-            desc as *const _ as *const ::winapi::DXGI_SWAP_CHAIN_FULLSCREEN_DESC
+            desc as *const _ as *const DXGI_SWAP_CHAIN_FULLSCREEN_DESC
         } else {
             ::std::ptr::null()
         };
@@ -66,11 +65,11 @@ impl Factory {
             ::std::ptr::null_mut()
         };
         unsafe {
-            let mut ptr: *mut IDXGISwapChain3 = ::std::mem::uninitialized();
+            let mut ptr: *mut IDXGISwapChain3 = std::ptr::null_mut();
             let hr = self.ptr.CreateSwapChainForHwnd(
                 queue.ptr.as_mut_ptr() as *mut _,
                 hwnd,
-                desc as *const _ as *const ::winapi::DXGI_SWAP_CHAIN_DESC1,
+                desc as *const _ as *const DXGI_SWAP_CHAIN_DESC1,
                 fullscreen_desc,
                 restrict_output,
                 &mut ptr as *mut *mut _ as *mut *mut IDXGISwapChain1 // TODO: double check
@@ -97,7 +96,7 @@ impl Factory {
 
 /// a provider for HWND
 pub trait HwndProvider {
-    fn get_hwnd(&self) -> ::winapi::HWND;
+    fn get_hwnd(&self) -> HWND;
 }
 
 /// iterator returned by a factory to retrieve available adapters
@@ -113,7 +112,7 @@ impl<'a> Iterator for AdapterIter<'a> {
     fn next(&mut self) -> Option<Adapter> {
         let old_idx = self.idx;
         unsafe {
-            let mut padapter: *mut IDXGIAdapter1 = ::std::mem::uninitialized();
+            let mut padapter: *mut IDXGIAdapter1 = std::ptr::null_mut();
             let hr = self.factory.ptr.EnumAdapters1(
                 old_idx,
                 &mut padapter as *mut *mut _ as *mut *mut IDXGIAdapter1
@@ -121,11 +120,11 @@ impl<'a> Iterator for AdapterIter<'a> {
             if let Err(_) = WinError::from_hresult(hr) {
                 return None;
             }
-            let mut adapter1 = ComPtr::new(padapter);
+            let adapter1 = ComPtr::new(padapter);
 
-            let mut padapter: *mut IDXGIAdapter3 = ::std::mem::uninitialized();
+            let mut padapter: *mut IDXGIAdapter3 = std::ptr::null_mut();
             let hr = adapter1.QueryInterface(
-                & ::dxguid::IID_IDXGIAdapter3,
+                & IID_IDXGIAdapter3,
                 &mut padapter as *mut *mut _ as *mut *mut _
             );
 
@@ -147,11 +146,11 @@ pub struct Adapter {
 
 impl Adapter {
     /// get basic descriptions about the adapter
-    pub fn get_desc(&mut self) -> Result<AdapterDesc, WinError> {
+    pub fn get_desc(&mut self) -> Result<DXGI_ADAPTER_DESC1, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
-            let hr = self.ptr.GetDesc1(&mut ret);
-            WinError::from_hresult_or_ok(hr, || ::std::mem::transmute(ret))
+            let ret: *mut DXGI_ADAPTER_DESC1 = std::ptr::null_mut();
+            let hr = self.ptr.GetDesc1(ret);
+            WinError::from_hresult_or_ok(hr, || (*ret))
         }
     }
 
@@ -166,20 +165,20 @@ impl Adapter {
 
     /// query adapter memory infos
     #[inline]
-    pub fn query_mem_info(&mut self, node_idx: u32, local: bool) -> Result<VideoMemInfo, WinError> {
+    pub fn query_mem_info(&mut self, node_idx: u32, local: bool) -> Result<DXGI_QUERY_VIDEO_MEMORY_INFO, WinError> {
         let mem_seg_group = if local {
-            ::winapi::DXGI_MEMORY_SEGMENT_GROUP_LOCAL
+            DXGI_MEMORY_SEGMENT_GROUP_LOCAL
         } else {
-            ::winapi::DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL
+            DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL
         };
         unsafe {
-            let mut ret: VideoMemInfo = ::std::mem::uninitialized();
+            let mut ret: *mut DXGI_QUERY_VIDEO_MEMORY_INFO = std::ptr::null_mut();
             let hr = self.ptr.QueryVideoMemoryInfo(
                 node_idx, mem_seg_group, 
                 &mut ret as *mut _ as *mut _
             );
             WinError::from_hresult_or_ok(hr, || {
-                ret
+                *ret
             })
         }
     }
@@ -199,7 +198,7 @@ pub struct VideoMemInfo {
 #[repr(C)]
 pub struct AdapterDesc {
     /// a string description of the adapter
-    pub description: [::winapi::WCHAR; 128],
+    pub description: [WCHAR; 128],
     /// PCI ID of the hardware vendor
     pub vendor_id: u32,
     /// PCI ID of the hardware device
@@ -213,14 +212,16 @@ pub struct AdapterDesc {
     /// shared system memory
     pub shared_smem: usize,
     /// locally unique id for the adapter
-    pub luid: ::winapi::LUID,
+    pub luid: LUID,
     /// misc flags
     pub flags: AdapterFlags,
 }
 
 impl ::std::fmt::Debug for AdapterDesc {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
-        write!(f, "AdapterDesc {{ description: {:?}, vendor_id: {:?}, device_id: {:?}, revision: {:?}, dedicated_vmem: {:?}, dedicated_smem: {:?}, shared_smem: {:?}, luid: {:?}, flags: {:?} }}", ::format::from_wchar_slice(&self.description), self.vendor_id, self.device_id, self.revision, self.dedicated_vmem, self.dedicated_smem, self.shared_smem, self.luid, self.flags)
+        // FIXME: luid excluded. 
+        write!(f, "AdapterDesc {{ description: {:?}, vendor_id: {:?}, device_id: {:?}, revision: {:?}, dedicated_vmem: {:?}, dedicated_smem: {:?}, shared_smem: {:?}, flags: {:?} }}", ::format::from_wchar_slice(&self.description), self.vendor_id, self.device_id, self.revision, self.dedicated_vmem, self.dedicated_smem, self.shared_smem, self.flags)
+
     }
 }
 
@@ -255,7 +256,7 @@ impl<'a> Iterator for OutputIter<'a> {
     fn next(&mut self) -> Option<Output> {
         let oldidx = self.idx;
         unsafe {
-            let mut ptr: *mut IDXGIOutput = ::std::mem::uninitialized();
+            let mut ptr: *mut IDXGIOutput = std::ptr::null_mut();
             let hr = self.adapter.ptr.EnumOutputs(
                 oldidx, &mut ptr
             );
@@ -278,39 +279,11 @@ impl Output {
 
     /// get basic description for the output
     #[inline]
-    pub fn get_desc(&mut self) -> Result<OutputDesc, WinError> {
+    pub fn get_desc(&mut self) -> Result<DXGI_OUTPUT_DESC, WinError> {
         unsafe {
-            let mut ret = ::std::mem::uninitialized();
+            let mut ret: *mut DXGI_OUTPUT_DESC = std::ptr::null_mut();
             let hr = self.ptr.GetDesc(&mut ret as *mut _ as *mut _);
-            WinError::from_hresult_or_ok(hr, || ret)
+            WinError::from_hresult_or_ok(hr, ||(*ret))
         }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-pub struct OutputDesc {
-    pub name: [::winapi::WCHAR; 32],
-    pub descktop_coordinates: ::format::Rect,
-    pub attached_to_desktop: ::format::Bool,
-    pub rotation: RotationMode,
-    pub hmonitor: ::winapi::HMONITOR,
-}
-
-impl ::std::fmt::Display for OutputDesc {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> Result<(), ::std::fmt::Error> {
-        write!(f, "{:?}", ::format::from_wchar_slice(&self.name))
-    }
-}
-
-bitflags!{
-    /// rotation mode for the monitor
-    #[repr(C)]
-    pub struct RotationMode: u32 {
-        const UNSPECIFIED = 0;
-        const IDENTITY = 1;
-        const ROTATE90 = 2;
-        const ROTATE180 = 3;
-        const ROTATE270 = 4;
     }
 }

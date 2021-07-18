@@ -9,6 +9,7 @@
 //! describes an unordered access view
 
 use format::DxgiFormat;
+use winapi::um::d3d12::{D3D12_UAV_DIMENSION, D3D12_UAV_DIMENSION_BUFFER, D3D12_UAV_DIMENSION_TEXTURE1D, D3D12_UAV_DIMENSION_TEXTURE1DARRAY, D3D12_UAV_DIMENSION_TEXTURE2D, D3D12_UAV_DIMENSION_TEXTURE2DARRAY, D3D12_UAV_DIMENSION_TEXTURE3D, D3D12_UAV_DIMENSION_UNKNOWN};
 
 /// describes an unordered access view
 #[derive(Copy, Clone, Debug)]
@@ -108,7 +109,7 @@ pub struct UavTex3DDesc{
 #[derive(Copy, Clone, Debug)]
 pub struct UavDescBindHelper {
     format: DxgiFormat,
-    view_dimension: ::winapi::D3D12_UAV_DIMENSION,
+    view_dimension: D3D12_UAV_DIMENSION,
     component_mapping: u32,
     a: UavBufferDesc,
 }
@@ -121,29 +122,29 @@ impl From<UavDesc> for UavDescBindHelper{
             ret.format = desc.format;
             match desc.dimension {
                 UavDimension::Unknown =>
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_UNKNOWN,
+                    ret.view_dimension = D3D12_UAV_DIMENSION_UNKNOWN,
                 UavDimension::Buffer(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_BUFFER;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_BUFFER;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 UavDimension::Tex1D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_TEXTURE1D;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_TEXTURE1D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 UavDimension::Tex1DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 UavDimension::Tex2D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_TEXTURE2D;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_TEXTURE2D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 UavDimension::Tex2DArray(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
                 UavDimension::Tex3D(content) => {
-                    ret.view_dimension = ::winapi::D3D12_UAV_DIMENSION_TEXTURE3D;
+                    ret.view_dimension = D3D12_UAV_DIMENSION_TEXTURE3D;
                     ret.a = ::std::mem::transmute_copy(&content);
                 },
             }

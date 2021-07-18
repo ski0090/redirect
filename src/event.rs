@@ -7,14 +7,11 @@
 // except according to those terms.
 
 //! RAII Win32 event wrapper
-
-use winapi::HANDLE;
-use kernel32::{CreateEventExW, ResetEvent, SetEvent, CloseHandle, GetLastError, WaitForSingleObject};
+use winapi::um::{errhandlingapi::GetLastError, handleapi::CloseHandle, synchapi::{CreateEventExW, ResetEvent, SetEvent, WaitForSingleObject}, winbase::INFINITE, winnt::HANDLE};
 
 /// RAII Win32 event
 pub struct Event {
     handle: HANDLE,
-    
 }
 
 impl Event {
@@ -64,7 +61,7 @@ impl Event {
     /// wait for this event to be set
     #[inline]
     pub fn wait(&self) -> Result<(), u32> {
-        self.wait_for(::winapi::INFINITE)
+        self.wait_for(INFINITE)
     }
 
     /// wait for `milli_sec` ms

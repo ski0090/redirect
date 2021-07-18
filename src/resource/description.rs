@@ -9,7 +9,9 @@
 //! attributes used to describe a resource
 
 use format::*;
-use swapchain::SampleDesc;
+use winapi::{shared::dxgiformat::DXGI_FORMAT_UNKNOWN, um::d3d12::D3D12_RESOURCE_DESC};
+
+use crate::swapchain::SampleDesc;
 
 /// resource description
 #[repr(C)]
@@ -90,8 +92,8 @@ impl ResourceDesc{
     pub fn tex3d(
         width: u64, height: u32, depth: u16, mip_levels: u16,
         format: DxgiFormat, flags: ResourceFlags, alignment: ResourceAlignment
-    ) -> ResourceDesc{
-        ResourceDesc{
+) -> ResourceDesc{
+            ResourceDesc{
             dimension: ResourceDimension::TEXTURE3D,
             alignment, width, height, depth,
             mip_levels: mip_levels,
@@ -103,7 +105,7 @@ impl ResourceDesc{
     }
 }
 
-impl From<ResourceDesc> for ::winapi::D3D12_RESOURCE_DESC {
+impl From<ResourceDesc> for D3D12_RESOURCE_DESC {
     #[inline]
     fn from(desc: ResourceDesc) -> Self {
         unsafe{ ::std::mem::transmute(desc)}
@@ -124,6 +126,7 @@ bitflags!{
         const FOUR_MB = 0x1_000_000;
     }
 }
+
 
 impl Default for ResourceAlignment {
     #[inline]

@@ -7,11 +7,12 @@
 // except according to those terms.
 
 //! RAII COM-pointer wrapper
-
-use ::winapi::IUnknown;
+use std::fmt::{self, Debug};
 use ::std::ops::{Deref, DerefMut};
 
-#[derive(PartialEq, Eq, Debug)]
+use winapi::um::unknwnbase::IUnknown;
+
+#[derive(PartialEq, Eq)]
 pub struct ComPtr<T> {
     ptr: *mut T,
 }
@@ -83,6 +84,15 @@ impl<T> Drop for ComPtr<T> {
     #[inline]
     fn drop(&mut self) {
         unsafe {as_iunknown(self.ptr).Release();}
+    }
+}
+
+impl<T> Debug for ComPtr<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = std::any::type_name::<T>();
+        f.debug_struct("ComPtr") // FIXME: D3DType is not impliement for debug.
+         .field(name,&self.as_ptr())
+         .finish()
     }
 }
 

@@ -10,12 +10,25 @@
 
 use super::{ResourceStates, RawResource};
 use smallvec::SmallVec;
+use winapi::um::d3d12::{D3D12_RESOURCE_BARRIER, D3D12_RESOURCE_BARRIER_TYPE_ALIASING, D3D12_RESOURCE_BARRIER_TYPE_TRANSITION, D3D12_RESOURCE_BARRIER_TYPE_UAV, ID3D12Resource};
 use std::borrow::Borrow;
 
 /// resource barrier builder
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct ResourceBarriersBuilder {
-    barriers: SmallVec<[::winapi::D3D12_RESOURCE_BARRIER; 8]>,
+    barriers: SmallVec<[D3D12_RESOURCE_BARRIER; 8]>,
+}
+
+impl std::fmt::Debug for ResourceBarriersBuilder{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_varriers:Vec<(u32,u32)> = Vec::new(); // FIXME: D3DType is not impliement for debug.
+        self.barriers.iter().for_each(|barrier|{
+            debug_varriers.push((barrier.Type, barrier.Flags))
+        });
+        f.debug_struct("ResourceBarriersBuilder")
+         .field("barriers",&debug_varriers)
+         .finish()
+    }
 }
 
 impl ResourceBarriersBuilder {
@@ -28,7 +41,7 @@ impl ResourceBarriersBuilder {
     }
 
     #[inline]
-    pub fn as_ffi_slice(&self) -> &[::winapi::D3D12_RESOURCE_BARRIER] {
+    pub fn as_ffi_slice(&self) -> &[D3D12_RESOURCE_BARRIER] {
         self.barriers.borrow()
     }
 }
@@ -82,23 +95,23 @@ impl ResourceBarrier {
     }
 }
 
-impl From<ResourceBarrier> for ::winapi::D3D12_RESOURCE_BARRIER {
+impl From<ResourceBarrier> for D3D12_RESOURCE_BARRIER {
     #[inline]
     fn from(barrier: ResourceBarrier) -> Self {
         unsafe {
-            let mut ret: Self = ::std::mem::uninitialized();
+            let mut ret: Self = std::mem::zeroed();
             ret.Flags = ::std::mem::transmute(barrier.flags);
             match barrier.barrier_type {
                 ResourceBarrierType::Transition(transition) => {
-                    ret.Type = ::winapi::D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                    ret.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
                     ret.u = ::std::mem::transmute_copy(&transition);
                 },
                 ResourceBarrierType::Aliasing(aliasing) => {
-                    ret.Type = ::winapi::D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+                    ret.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
                     ret.u = ::std::mem::transmute_copy(&aliasing);
                 },
                 ResourceBarrierType::Uav(uav) => {
-                    ret.Type = ::winapi::D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                    ret.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
                     ret.u = ::std::mem::transmute_copy(&uav);
                 }
             }
@@ -118,7 +131,7 @@ pub enum ResourceBarrierType {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct ResourceTransitionBarrier {
-    resource: *mut ::winapi::ID3D12Resource,
+    resource: *mut ID3D12Resource,
     subresource: u32,
     before: ResourceStates,
     after: ResourceStates,
@@ -142,8 +155,8 @@ impl ResourceTransitionBarrier {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct ResourceAliasingBarrier {
-    before: *mut ::winapi::ID3D12Resource,
-    after: *mut ::winapi::ID3D12Resource,
+    before: *mut ID3D12Resource,
+    after: *mut ID3D12Resource,
 }
 
 impl ResourceAliasingBarrier {
@@ -169,7 +182,7 @@ impl ResourceAliasingBarrier {
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 pub struct ResourceUavBarrier {
-    resource: *mut ::winapi::ID3D12Resource,
+    resource: *mut ID3D12Resource,
 }
 
 impl ResourceUavBarrier {

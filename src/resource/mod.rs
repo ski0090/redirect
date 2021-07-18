@@ -52,6 +52,10 @@ pub mod texture;
 pub use self::texture::*;
 
 use format::*;
+use winapi::um::d3d12::D3D12_TEXTURE_COPY_LOCATION;
+use winapi::um::d3d12::D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+use winapi::um::d3d12::D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+use winapi::um::d3d12::ID3D12Resource;
 
 // TODO: find out a sound way to work with different types of resources
 
@@ -64,25 +68,25 @@ pub struct ResourceAllocInfo {
 }
 
 /// describes a resource used for GPU texture copying
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
 pub struct TextureCopyLocation {
-    ptr: *mut ::winapi::ID3D12Resource,
+    ptr: *mut ID3D12Resource,
     pub copy_type: TextureCopyType,
 }
 
-impl From<TextureCopyLocation> for ::winapi::D3D12_TEXTURE_COPY_LOCATION {
+impl From<TextureCopyLocation> for D3D12_TEXTURE_COPY_LOCATION {
     #[inline]
     fn from(loc: TextureCopyLocation) -> Self {
         unsafe {
-            let mut ret: Self = ::std::mem::uninitialized();
+            let mut ret: Self = std::mem::zeroed();
             ret.pResource = loc.ptr;
             match loc.copy_type {
                 TextureCopyType::SubresourceIndex(idx) => {
-                    ret.Type = ::winapi::D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+                    ret.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
                     ret.u = ::std::mem::transmute_copy(&idx);
                 },
                 TextureCopyType::PlacedFootprint(footprint) => {
-                    ret.Type = ::winapi::D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+                    ret.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
                     ret.u = ::std::mem::transmute(footprint);
                 },
             }

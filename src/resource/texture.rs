@@ -13,6 +13,8 @@ use super::traits::*;
 use device::Device;
 use error::WinError;
 use format::DxgiFormat;
+use winapi::shared::dxgiformat::DXGI_FORMAT_D16_UNORM;
+use winapi::shared::dxgiformat::DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 #[derive(Debug)]
 pub struct DefaultTex2D {
@@ -82,10 +84,10 @@ impl DsableTex2D {
         mip_levels: u16, format: DxgiFormat
     ) -> Result<DsableTex2D, WinError> {
         debug_assert!(
-            format == ::format::DXGI_FORMAT_D16_UNORM ||
-            format == ::format::DXGI_FORMAT_D32_FLOAT ||
-            format == ::format::DXGI_FORMAT_D24_UNORM_S8_UINT ||
-            format == ::format::DXGI_FORMAT_D32_FLOAT_S8X24_UINT
+            format == DXGI_FORMAT_D16_UNORM ||
+            format == DXGI_FORMAT_D16_UNORM ||
+            format == DXGI_FORMAT_D24_UNORM_S8_UINT ||
+            format == DXGI_FORMAT_D24_UNORM_S8_UINT
         );
         let raw = device.create_committed_resource(
             &Default::default(),

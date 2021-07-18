@@ -9,7 +9,6 @@
 //! command lists
 
 use comptr::ComPtr;
-use winapi::{ID3D12GraphicsCommandList, ID3D12CommandAllocator};
 use error::WinError;
 use descriptor::heap::*;
 use pipeline::{PipelineState, GraphicsPipelineState, ComputePipelineState};

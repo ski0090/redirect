@@ -9,6 +9,8 @@
 //! descriptor description boilerplates
 
 mod srv;
+use winapi::um::d3d12::D3D12_SHADER_COMPONENT_MAPPING_SHIFT;
+
 pub use self::srv::*;
 
 mod cbv;
@@ -41,9 +43,9 @@ impl Shader4ComponentMapping {
         Shader4ComponentMapping{
             // TODO: double check
             inner: r.bits() + 
-             g.bits()<< ::winapi::D3D12_SHADER_COMPONENT_MAPPING_SHIFT + 
-             b.bits()<< ::winapi::D3D12_SHADER_COMPONENT_MAPPING_SHIFT*2 + 
-             a.bits()<< ::winapi::D3D12_SHADER_COMPONENT_MAPPING_SHIFT*3
+             g.bits()<< D3D12_SHADER_COMPONENT_MAPPING_SHIFT + 
+             b.bits()<< D3D12_SHADER_COMPONENT_MAPPING_SHIFT*2 + 
+             a.bits()<< D3D12_SHADER_COMPONENT_MAPPING_SHIFT*3
         }
     }
 }

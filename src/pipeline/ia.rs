@@ -11,6 +11,7 @@
 use std::os::raw::c_char;
 use format::DxgiFormat;
 use smallvec::SmallVec;
+use winapi::um::d3d12::D3D12_APPEND_ALIGNED_ELEMENT;
 use std::marker::PhantomData;
 use std::ffi::CStr;
 
@@ -80,7 +81,7 @@ impl<'a> InputElementDesc<'a>{
         InputElementDesc{
             semantic_name: semantic_name.as_ptr(), 
             semantic_index: 0, format, input_slot: 0, 
-            aligned_byte_offset: ::winapi::D3D12_APPEND_ALIGNED_ELEMENT,
+            aligned_byte_offset: D3D12_APPEND_ALIGNED_ELEMENT,
             input_slot_class: InputClassification::PER_VERTEX,
             instance_data_step_rate: 0,
             _pd: Default::default(),

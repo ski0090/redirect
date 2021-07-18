@@ -8,6 +8,8 @@
 
 //! flags for resource usage and access patterns
 
+use winapi::shared::dxgitype::DXGI_USAGE;
+
 bitflags! {
     /// resource usage flags
     #[repr(C)]
@@ -37,8 +39,8 @@ bitflags! {
     }
 }
 
-impl From<Usage> for ::winapi::DXGI_USAGE {
+impl From<Usage> for DXGI_USAGE {
     fn from(usage: Usage) -> Self {
-        ::winapi::DXGI_USAGE(usage.bits())
+        DXGI_USAGE::from(usage.bits())
     }
 }

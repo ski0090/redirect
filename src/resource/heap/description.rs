@@ -2,11 +2,13 @@
 //
 // Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
 // http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// <LICENSE-MIT orpub(crate)  http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
 //! Types to describe a heap
+
+use winapi::um::d3d12::{D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT};
 
 /// description of a heap
 #[repr(C)]
@@ -139,9 +141,9 @@ bitflags!{
         /// alias for 64kb, the default.
         const DEFAULT = 0;
         /// 64kb aligned.
-        const DEFAULT_RESOURCE_PLACEMENT = ::winapi::D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT as u64;
+        const DEFAULT_RESOURCE_PLACEMENT = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT as u64;
         /// 4mb aligned. MSAA resource heap must use this alignment.
-        const DEFAULT_MSAA_RESOURCE_PLACEMENT = ::winapi::D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT as u64;
+        const DEFAULT_MSAA_RESOURCE_PLACEMENT = D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT as u64;
     }
 }
 

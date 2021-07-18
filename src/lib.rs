@@ -13,11 +13,6 @@
 #[macro_use]
 extern crate bitflags;
 extern crate winapi;
-extern crate d3d12;
-extern crate dxguid;
-extern crate dxgi;
-extern crate d3dcompiler;
-extern crate kernel32;
 extern crate smallvec;
 
 mod comptr;

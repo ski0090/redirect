@@ -8,10 +8,10 @@
 
 //! a fence is used for synchronization of CPUs and GPUs
 
-use winapi::ID3D12Fence;
 use comptr::ComPtr;
 use error::WinError;
 use event::Event;
+use winapi::um::d3d12::ID3D12Fence;
 
 /// a fence
 #[derive(Clone, Debug)]

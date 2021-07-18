@@ -9,6 +9,7 @@
 //! stream output descriptions
 
 use smallvec::SmallVec;
+use winapi::um::d3d12::D3D12_STREAM_OUTPUT_DESC;
 use std::os::raw::c_char;
 use std::marker::PhantomData;
 use std::ffi::CStr;
@@ -61,8 +62,8 @@ impl<'a> DescBuilder<'a> {
 
     /// finalization
     #[inline]
-    pub fn build(&self) -> (::winapi::D3D12_STREAM_OUTPUT_DESC, PhantomData<&DescBuilder>) {
-        (::winapi::D3D12_STREAM_OUTPUT_DESC{
+    pub fn build(&self) -> (D3D12_STREAM_OUTPUT_DESC, PhantomData<&DescBuilder>) {
+        (D3D12_STREAM_OUTPUT_DESC{
             pSODeclaration: self.entries.as_ptr() as *const _,
             NumEntries: self.entries.len() as u32,
             pBufferStrides: self.strides.as_ptr(),
